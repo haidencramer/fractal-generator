@@ -7,10 +7,10 @@ def main():
     print("--- Fractal Generator Observer Update ---")
     
     # Mock weather data (replace with your actual weather API call)
-    temp = 10.5
-    humidity = 32
-    wind_speed = 6.9
-    
+    weather = get_weather_data()
+    temp = weather['temp']
+    humidity = weather['humidity']
+    wind_speed = weather['wind_speed']
     # Map weather to fractal math
     # Temperature shifts the real part, Humidity shifts the imaginary part
     c_const = complex(-0.7 + (temp / 100), 0.27 + (humidity / 1000))
