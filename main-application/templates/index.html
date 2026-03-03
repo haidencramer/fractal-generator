@@ -6,20 +6,16 @@
         :root { --accent: #00d4ff; --bg: rgba(15, 15, 15, 0.9); }
         body { background: #050505; color: white; text-align: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; overflow: hidden; }
         
-        /* UI Layer */
         #ui-layer { position: absolute; top: 20px; left: 20px; background: var(--bg); padding: 20px; border-radius: 12px; text-align: left; z-index: 10; border: 1px solid #333; backdrop-filter: blur(10px); width: 280px; }
         .weather-info { color: #ff4500; font-weight: bold; font-size: 1.1em; margin-bottom: 5px; }
         
-        /* Buttons */
         button { background: #444; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin-top: 10px; transition: 0.3s; font-size: 0.9em; }
         button:hover { background: var(--accent); color: black; }
         .btn-group { display: flex; flex-wrap: wrap; gap: 5px; }
         
-        /* Download Button Special Style */
         .btn-download { background: var(--accent); color: black; font-weight: bold; width: 100%; }
         .btn-download:hover { background: white; }
 
-        /* The Math Popup */
         #math-popup { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: var(--bg); border: 2px solid var(--accent); padding: 30px; border-radius: 15px;
@@ -45,7 +41,8 @@
     </div>
     
     <div class="btn-group">
-        <button onclick="resetView()">Reset Zoom</button>
+        <button onclick="resetView()">Reset View</button>
+        <button id="zoom-toggle" onclick="toggleAutoZoom()">▶ Play Deep Zoom</button>
         <button onclick="toggleMath()">How it Works</button>
         <button onclick="downloadSnapshot()" class="btn-download">High-Res Snapshot (4K)</button>
     </div>
@@ -74,13 +71,16 @@
     const canvas = document.getElementById('fractalCanvas');
     const ctx = canvas.getContext('2d');
     
-    // Seed values from Python/Weather
     const creal = {{ c_real }};
     const cimag = {{ c_imag }};
     
-    // Performance Tweak: 0.5 = Faster movement, 1.0 = Sharper details
     let renderScale = 0.5; 
     let width, height, zoom = 0.8, offsetX = 0, offsetY = 0;
+    let isAutoZooming = false;
+
+    // Target a visually dense area (The "Seahorse" region)
+    const targetX = -0.74364;
+    const targetY = 0.13182;
 
     function resize() {
         width = Math.floor(window.innerWidth * renderScale);
@@ -92,7 +92,6 @@
         draw();
     }
 
-    // Main optimized drawing logic (Capped at 100 iterations for speed)
     function draw() {
         const imgData = ctx.createImageData(width, height);
         const maxIter = 100;
@@ -121,28 +120,43 @@
         ctx.putImageData(imgData, 0, 0);
     }
 
-    // *** DOWNLOAD SNAPSHOT FUNCTION ***
+    function toggleAutoZoom() {
+        isAutoZooming = !isAutoZooming;
+        const btn = document.getElementById('zoom-toggle');
+        btn.innerText = isAutoZooming ? "⏹ Stop Zoom" : "▶ Play Deep Zoom";
+        if (isAutoZooming) animateZoom();
+    }
+
+    function animateZoom() {
+        if (!isAutoZooming) return;
+        
+        // Exponential zoom
+        zoom *= 1.025; 
+        
+        // Gradually move the offset towards the "detailed" target point
+        offsetX += (targetX - offsetX) * 0.05;
+        offsetY += (targetY - offsetY) * 0.05;
+
+        draw();
+        requestAnimationFrame(animateZoom);
+    }
+
     function downloadSnapshot() {
-        // Step 1: Tell user it will take a moment (it's heavy work)
         const btn = document.querySelector('.btn-download');
         const oldText = btn.innerText;
         btn.innerText = "Rendering (Wait)...";
         btn.disabled = true;
 
-        // Force a brief delay so the browser can update the button text
         setTimeout(() => {
-            // Step 2: Create a separate, hidden "High-Res" canvas (e.g., 4K)
             const hrCanvas = document.createElement('canvas');
             const hrCtx = hrCanvas.getContext('2d');
-            const hrWidth = hrCanvas.width = 3840; // 4K Resolution
+            const hrWidth = hrCanvas.width = 3840;
             const hrHeight = hrCanvas.height = 2160;
             const imgData = hrCtx.createImageData(hrWidth, hrHeight);
-            const maxIter = 256; // High iterations for deep detail
+            const maxIter = 256;
 
-            // Step 3: Run the heavy render logic one last time
             for (let x = 0; x < hrWidth; x++) {
                 for (let y = 0; y < hrHeight; y++) {
-                    // Use the user's current zoom/offset, but map to new width
                     let zr = (x - hrWidth / 2) / (0.3 * zoom * hrWidth) + offsetX;
                     let zi = (y - hrHeight / 2) / (0.3 * zoom * hrHeight) + offsetY;
                     let iter = 0;
@@ -156,7 +170,6 @@
                     if (iter === maxIter) {
                         imgData.data[pix] = imgData.data[pix+1] = imgData.data[pix+2] = 0;
                     } else {
-                        // Use a smooth, continuous coloring logic for high-res
                         imgData.data[pix] = (iter * 12) % 255; 
                         imgData.data[pix+1] = (iter * 4) % 255;
                         imgData.data[pix+2] = (iter * 20) % 255;
@@ -165,49 +178,42 @@
                 }
             }
             hrCtx.putImageData(imgData, 0, 0);
-
-            // Step 4: Convert the 4K render to a downloadable file link
             const link = document.createElement('a');
-            // Save as PNG
-            link.download = `fractal_seed_{{ c_real }}_{{ c_imag }}.png`; 
+            link.download = `fractal_snapshot.png`; 
             link.href = hrCanvas.toDataURL("image/png");
-            
-            // Step 5: Automatically "click" the link to trigger download
             link.click();
-
-            // Step 6: Reset the button
             btn.innerText = oldText;
             btn.disabled = false;
-        }, 10); // End of timeout
+        }, 10);
     }
 
-    // Interactivity Functions
     function resetView() {
-        zoom = 0.8; offsetX = 0; offsetY = 0; draw();
+        zoom = 0.8; offsetX = 0; offsetY = 0; isAutoZooming = false;
+        document.getElementById('zoom-toggle').innerText = "▶ Play Deep Zoom";
+        draw();
     }
+    
     function toggleMath() {
         const pop = document.getElementById('math-popup');
         pop.style.display = pop.style.display === 'block' ? 'none' : 'block';
     }
 
-    // Controls (Wheel & Mouse)
     window.addEventListener('wheel', e => {
         zoom *= e.deltaY > 0 ? 0.85 : 1.15;
         draw();
     });
+
     let isDragging = false;
     window.addEventListener('mousedown', () => isDragging = true);
     window.addEventListener('mouseup', () => isDragging = false);
     window.addEventListener('mousemove', e => {
         if (isDragging) {
-            // Note: renderScale adjusts for movement speed
             offsetX -= (e.movementX / (zoom * width)) / renderScale;
             offsetY -= (e.movementY / (zoom * height)) / renderScale;
             draw();
         }
     });
 
-    // Start Up
     window.addEventListener('resize', resize);
     resize();
 </script>
