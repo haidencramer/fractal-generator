@@ -1,0 +1,47 @@
+name: Deploy AtmosFractal to Jetstream2
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: exouser
+          key: ${{ secrets.KEY }}
+          script: |
+            # 1. Navigate to project folder
+            cd /home/exouser/fractal-weather || git clone https://github.com/${{ github.repository }} /home/exouser/fractal-weather
+            cd /home/exouser/fractal-weather
+            
+            # 2. Pull latest code
+            git pull origin main
+            
+            # 3. Sync dependencies using uv (just like your wildfire project)
+            /home/exouser/.local/bin/uv sync
+            
+            # 4. Ensure static folder exists for stateful data
+            mkdir -p static
+            
+            # 5. Copy Systemd files to the system directory
+            sudo cp systemd/fractal-app.service /etc/systemd/system/
+            sudo cp systemd/fractal-gen.service /etc/systemd/system/
+            sudo cp systemd/fractal-gen.timer /etc/systemd/system/
+            
+            # 6. Reload Systemd and Restart Services
+            sudo systemctl daemon-reload
+            
+            # Enable and start the Web Server
+            sudo systemctl enable --now fractal-app.service
+            sudo systemctl restart fractal-app.service
+            
+            # Enable and start the Observer Timer
+            sudo systemctl enable --now fractal-gen.timer
