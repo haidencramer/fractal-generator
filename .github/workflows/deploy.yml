@@ -1,4 +1,4 @@
-name: Deploy Fractal Generatorto Jetstream2
+name: Deploy Fractal Generator 
 
 on:
   push:
@@ -25,18 +25,22 @@ jobs:
             # 2. Pull latest code
             git pull origin main
             
-            # 3. Sync dependencies using uv (just like your wildfire project)
+            # 3. Enter the application directory (where pyproject.toml and systemd/ live)
+            cd main-application
+            
+            # 4. Sync dependencies using uv (just like your wildfire project)
             /home/exouser/.local/bin/uv sync
             
-            # 4. Ensure static folder exists for stateful data
+            # 5. Ensure static folder exists for stateful data
             mkdir -p static
             
-            # 5. Copy Systemd files to the system directory
+            # 6. Copy Systemd files to the system directory
+            # We are now inside main-application, so the systemd path is correct
             sudo cp systemd/fractal-app.service /etc/systemd/system/
             sudo cp systemd/fractal-gen.service /etc/systemd/system/
             sudo cp systemd/fractal-gen.timer /etc/systemd/system/
             
-            # 6. Reload Systemd and Restart Services
+            # 7. Reload Systemd and Restart Services
             sudo systemctl daemon-reload
             
             # Enable and start the Web Server
