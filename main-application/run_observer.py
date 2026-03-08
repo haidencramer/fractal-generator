@@ -3,34 +3,50 @@ import os
 from generator.fractal import generate_julia
 from generator.weather import get_weather_data
 from generator.audio import generate_weather_tone
+from datetime import datetime
 
 def main():
     print("--- Fractal & Audio Observer Update ---")
     
-    # 1. Fetch live Missoula data
+    last_update = datetime.now().strftime("%b %d, %I:%M %p")
+    
     weather = get_weather_data()
     temp = weather.get("temp")
     humidity = weather.get("humidity")
     wind = weather.get("wind")
     
-    # 2. Update Fractal (Static Image)
     c_const = complex(-0.7 + (temp / 100), 0.27 + (humidity / 1000))
     os.makedirs("static", exist_ok=True)
-    generate_julia(c_const, "static/latest_fractal.png")
     
-    # 3. Update Audio & Spectrogram
     actual_freq = generate_weather_tone(wind)
     
-    # 4. Save JSON for the Website
+    history = []
+    if os.path.exists("static/weather_stats.json"):
+        try:
+            with open("static/weather_stats.json", "r") as f:
+                old_data = json.load(f)
+                history = old_data.get("history", [])
+        except:
+            pass
+
+    history.insert(0, {"time": last_update, "temp": temp})
+    history = history[:5]
+    
     stats = {
-        "temp": temp, "humidity": humidity, "wind": wind,
-        "freq": round(actual_freq, 2),
-        "c_real": round(c_const.real, 4), "c_imag": round(c_const.imag, 4)
+        "last_update": last_update,
+        "temp": temp, 
+        "humidity": humidity, 
+        "wind": wind,
+        "freq": round(actual_freq, 2) if actual_freq is not None else 0,
+        "c_real": round(c_const.real, 4), 
+        "c_imag": round(c_const.imag, 4),
+        "history": history
     }
+
     with open("static/weather_stats.json", "w") as f:
         json.dump(stats, f)
     
-    print(f"Success: Updated fractal and audio for {temp}°C and {wind}m/s wind.")
+    print(f"Success: Updated fractal and audio for {temp}°C at {last_update}")
 
 if __name__ == "__main__":
     main()

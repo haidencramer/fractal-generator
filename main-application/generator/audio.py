@@ -1,15 +1,31 @@
 import numpy as np
 from scipy.io import wavfile
 
+import matplotlib
+matplotlib.use('Agg')  # Prevents crashes on headless servers
+import matplotlib.pyplot as plt  # This defines 'plt'
+import numpy as np
+from scipy.io import wavfile
+
 def generate_weather_tone(wind_speed, filename="static/latest_audio.wav"):
+    # Calculate freq first to avoid previous NameErrors
+    freq = 200 + (float(wind_speed) * 50)
+    
     sample_rate = 44100
-    duration = 5.0
-    # Map wind speed (typically 0-30km/h) to frequency (220-700Hz)
-    frequency = 220 + (wind_speed * 15)
+    duration = 3.0
+    t = np.linspace(0, duration, int(sample_rate * duration))
     
-    t = np.linspace(0, duration, int(sample_rate * duration), False)
-    tone = np.sin(frequency * t * 2 * np.pi)
+    # Generate the audio signal
+    audio = 0.5 * np.sin(2 * np.pi * freq * t)
     
-    # Standardize to 16-bit integer for WAV file compatibility
-    final_audio = (tone * 32767).astype(np.int16)
-    wavfile.write(filename, sample_rate, final_audio)
+    # Save the WAV file
+    wavfile.write(filename, sample_rate, (audio * 32767).astype(np.int16))
+    
+    # Now plt will work!
+    plt.figure(figsize=(10, 4), facecolor='black')
+    plt.specgram(audio, Fs=sample_rate, cmap='inferno')
+    plt.axis('off')
+    plt.savefig("static/spectrogram.png", bbox_inches='tight', pad_inches=0, transparent=True)
+    plt.close()
+    
+    return freq
