@@ -18,6 +18,9 @@ def main():
     c_const = complex(-0.7 + (temp / 100), 0.27 + (humidity / 1000))
     os.makedirs("static", exist_ok=True)
     
+    # --- FIXED LINE BELOW: We name the filename so it doesn't break the 'width' integer ---
+    generate_julia(c_const, filename="static/latest_fractal.png")
+    
     actual_freq = generate_weather_tone(wind)
     
     history = []
