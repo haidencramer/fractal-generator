@@ -1,21 +1,21 @@
-# Generative Fractal Observer
+# Atmospheric Julia Set Observer
+**Midterm Project: Cloud-Native Architecture (Track C: The Observer)**
 
-## Project Track
-**Track C: The Observer (Automated Data Pipeline)**
+An automated data pipeline that fetches real-time weather data from Missoula, MT, to drive a complex mathematical visualization and audio sonification engine.
 
-## Project Description
-For my midterm project, I plan to build a cloud-native system on Jetstream2 that translates real-time weather conditions into fractal like art and audio. 
+## Infrastructure and DevOps
+- **Secured Perimeter:** Principle of Least Privilege enforced via Jetstream2 firewall (Only Ports 22, 80, 443 open).
+- **GitOps Automation:** Continuous Deployment via GitHub Actions (deploy.yml) on every push to main.
+- **Multi-Tenant Routing:** Served over HTTPS via Caddy with a custom .nip.io subdomain.
+- **Resilience:** Background tasks managed by systemd. A Systemd Timer runs the observer hourly, and the FastAPI app is managed as a persistent service.
 
-The goal is to create an observer pipeline that runs independently from the server. Every hour, I plan on using a background task to fetch local weather data in Missoula, Montana(temperature, humidity, and wind speed) from a public API. This data will be used as a "seed" for two processes I would like to explore:
+## How it Works
+1. **The Observer:** A Python script triggers hourly to fetch Temperature, Humidity, and Wind Speed from the Open-Meteo API.
+2. **The Math:** Weather variables are mapped to the Complex Constant 'c' in the Julia Set equation: z(n+1) = z(n)^2 + c.
+3. **The Sonification:** Wind speed drives a sine-wave oscillator in the backend, generating a .wav file and a spectrogram PNG representing the "sonic signature" of the wind.
+4. **The UI:** A high-iteration Canvas frontend allows users to explore the fractal with weather-driven focus points.
 
-1.  **Fractal Generation:** A Python script will render a Julia Set fractal where the visual is determined by current temperature and humidity for the constants within the equation.
-2.  **Audio Synthesis:** The system will generate a short ambient audio loop where the frequency/pitch is influenced by current wind speeds. (Probably not gonna sound good but very curious idea)
-
-The application will be served via a FastAPI dashboard behind a Caddy reverse proxy on a .nip.io subdomain like we have done in class. I also intend to use systemd timers to ensure the data collection is consistent across reboots.
-
-## Planned Tech Stack
-* **Language:** Python
-* **Infrastructure:** Jetstream2
-* **Process Management:** systemd (Services and Timers)
-* **Web Server:** FastAPI and Caddy
-* **Deployment:** GitHub Actions (CI/CD)
+## Obstacles Overcome
+- **Type Handling:** Resolved NoneType and NameError bugs in the data pipeline to ensure 100% uptime.
+- **Headless Plotting:** Implemented the 'Agg' backend for Matplotlib to allow spectrogram generation on a server without a display.
+- **Dynamic Targeting:** Built a targeting algorithm so the auto-zoom hunts for detail based on weather instead of empty space. 
