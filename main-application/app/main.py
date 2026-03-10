@@ -7,9 +7,9 @@ import os
 
 app = FastAPI(title="Fractal Generator")
 
-# 1. Mount the static folder (for images, css, or the weather_stats.json)
+# 1. Mount the folders 
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
+app.mount("/gallery-images", StaticFiles(directory="Fractal-Gallery"), name="gallery-images")
 # 2. Set up the Template engine
 # This looks for your index.html inside the /templates folder
 templates = Jinja2Templates(directory="templates")
@@ -43,3 +43,13 @@ async def home(request: Request):
         "c_real": data.get("c_real"),
         "c_imag": data.get("c_imag")
     })
+
+@app.get("/gallery", response_class=HTMLResponse)
+async def get_gallery(request: Request):
+    # Path to your new gallery folder
+    gallery_path = "Fractal-Gallery"
+    
+    # List all png files in the folder
+    images = [f for f in os.listdir(gallery_path) if f.endswith('.png')]
+    
+    return templates.TemplateResponse("gallery.html", {"request": request, "images": images})
