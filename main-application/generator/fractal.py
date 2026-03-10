@@ -20,7 +20,7 @@ def generate_julia(c, width=1920, height=1080, filename="static/latest_fractal.p
     counts = np.zeros(Z.shape, dtype=float)
     
     # 3. Optimized iteration loop
-    # We use a context manager to ignore the 'overflow' warnings from Z**2
+    # Uses a context manager to ignore the 'overflow' warnings from Z**2
     with np.errstate(over='ignore', invalid='ignore'):
         for i in range(max_iter):
             mask = np.abs(Z) <= 2
@@ -28,7 +28,6 @@ def generate_julia(c, width=1920, height=1080, filename="static/latest_fractal.p
             counts[mask] += 1
     
     # 4. Coloring Logic
-    # Logarithmic scaling + 'magma' colormap for that high-end look
     counts = np.log(counts + 1)
     normalized_counts = counts / np.log(max_iter + 1)
     color_mapped = cm.magma(normalized_counts)

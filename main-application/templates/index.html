@@ -61,7 +61,7 @@
     <audio id="audioPlayer" controls loop style="width: 100%; margin-top: 15px; filter: invert(1); height: 30px;">
         <source src="/static/latest_audio.wav" type="audio/wav">
     </audio>
-    <div id="last-sync" style="font-size: 0.6em; color: #555; margin-top: 5px;">Last Update: {{ last_update }}</div>
+    <div id="last-sync" style="font-size: 0.6em; color: #555; margin-top: 5px;">Last Update: {{ last_sync }}</div>
 </div>
 
 <div id="spec-popup">
@@ -199,7 +199,12 @@
     }
 
     // Existing Listeners...
-    function downloadSnapshot() { /* ... same as your previous code ... */ }
+    function downloadSnapshot() { const link = document.createElement('a');
+    link.download = 'fractal-snapshot.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    }
+
     window.addEventListener('wheel', e => { zoom *= e.deltaY > 0 ? 0.85 : 1.15; draw(); });
     let isDragging = false;
     window.addEventListener('mousedown', () => isDragging = true);

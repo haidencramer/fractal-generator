@@ -23,7 +23,7 @@ def generate_weather_tone(wind_speed, filename="static/latest_audio.wav"):
     
     # Create a "Cooler" Spectrogram
     plt.figure(figsize=(12, 5), facecolor='black')
-    plt.specgram(audio, Fs=sample_rate, cmap='magma', NFFT=1024) # 'magma' is deep purple/orange
+    plt.specgram(audio, Fs=sample_rate, cmap='twilight', NFFT=1024) 
     plt.axis('off')
     # Save to static folder
     plt.savefig("static/spectrogram.png", bbox_inches='tight', pad_inches=0, transparent=True, dpi=150)
