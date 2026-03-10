@@ -49,7 +49,7 @@ def main():
     with open("static/weather_stats.json", "w") as f:
         json.dump(stats, f)
     
-    print(f"Success: Updated fractal and audio for {temp}°C at {last_update}")
+    print(f"Success: Updated fractal and audio for {temp}°F at {last_update}")
 
 if __name__ == "__main__":
     main()

@@ -27,7 +27,7 @@ def generate_julia(c, width=1920, height=1080, filename="static/latest_fractal.p
             Z[mask] = Z[mask]**2 + c
             counts[mask] += 1
     
-    # 4. Professional Coloring Logic
+    # 4. Coloring Logic
     # Logarithmic scaling + 'magma' colormap for that high-end look
     counts = np.log(counts + 1)
     normalized_counts = counts / np.log(max_iter + 1)
